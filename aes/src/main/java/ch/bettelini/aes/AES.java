@@ -180,8 +180,7 @@ public class AES {
 
 			if (i % 4 == 0) {
 				rotateWord(tempWord);
-				subWord(tempWord);
-
+				subBytes(tempWord);
 
 				tempWord[0] = (byte) (tempWord[0] ^ (rcon[i / 4] & 0xFF));
 			} /*else if (Nk > 6 && i % Nk == 4) {
@@ -274,7 +273,7 @@ public class AES {
 		}
 	}*/
 
-	private void subWord(byte[] word) {
+	private void subBytes(byte[] word) {
 		for (int i = 0; i < 4; i++) {
 			word[i] = (byte) (sbox[word[i] & 0xFF] & 0xFF);
 		}

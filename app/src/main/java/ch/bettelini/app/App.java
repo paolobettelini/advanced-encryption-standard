@@ -9,9 +9,6 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import ch.bettelini.aes.AES;
-import ch.bettelini.app.utils.Converter;
-
 import java.awt.Color;
 import java.awt.Font;
 
@@ -20,11 +17,6 @@ public class App extends JFrame {
 	public static void main(String[] args) {
 		new App();
 	}
-
-	private AES cipher;
-
-	private int keyEncoding = 0, inputEncoding = 0, outputEncoding = 0;
-	private boolean encryption = true;
 	
 	public App() {
 		super("AES 128/192/256-bits ECB PKCS#5/PKCS#7 Encryption/Decryption");
@@ -170,119 +162,56 @@ public class App extends JFrame {
 
 		// AES Interaction
 
-		cipher = new AES(new byte[16]);
+		AESHandler handler = new AESHandler();
 
 		Runnable update = () -> {
-			if (keyField.getText().isEmpty()) {
-				return;
-			}
-
-			byte[] input = null;
-
-			switch (inputEncoding) {
-				case 0: // PlainText
-					input = inputField.getText().getBytes();
-					break;
-				case 1: // Base64
-					try {
-						input = Converter.frombase64(inputField.getText());
-					} catch (IllegalArgumentException e) {
-						outputField.setText("Invalid Base64 Input");
-						return;
-					}
-					break;
-				case 2: // Hex
-					try {
-						input = Converter.fromHex(inputField.getText());
-					} catch (IllegalArgumentException e) {
-						outputField.setText("Invalid Hex Input");
-						return;
-					}
-					break;
-			}
-
-			byte[] output = encryption ? cipher.encrypt(input) : cipher.decrypt(input);
-			String encoded = null;
-
-			switch (outputEncoding) {
-				case 0: // Base 64
-					encoded = Converter.toBase64(output);
-					break;
-				case 1: // Hex
-					encoded = Converter.toHex(output);
-					break;
-			}
-
-			outputField.setText(encoded);
+			outputField.setText(handler.getOutput());
 		};
 
 		inputField.getDocument().addDocumentListener(new DocumentListener() {
 
 			@Override
-			public void insertUpdate(DocumentEvent e) { update.run(); }
+			public void insertUpdate(DocumentEvent e) { keyChange(); }
 
 			@Override
-			public void removeUpdate(DocumentEvent e) { update.run(); }
+			public void removeUpdate(DocumentEvent e) { keyChange(); }
 
 			@Override
 			public void changedUpdate(DocumentEvent e) {}
+
+			public void keyChange() {
+				handler.setInput(inputField.getText());
+				update.run();
+			}
 			
 		});
-
-		Runnable updateKey = () -> {
-			try {
-				byte[] key = null;
-
-				switch (keyEncoding) {
-					case 0: // PlainText
-						key = keyField.getText().getBytes();
-						break;
-					case 1: // Base64
-						try {
-							key = Converter.frombase64(keyField.getText());
-						} catch (IllegalArgumentException e) {
-							outputField.setText("Invalid Base64 Key");
-							return;
-						}
-						break;
-					case 2: // Hex
-						try {
-							key = Converter.fromHex(keyField.getText());
-						} catch (IllegalArgumentException e) {
-							outputField.setText("Invalid Hex Key");
-							return;
-						}
-						break;
-				}
-				
-				cipher.setKey(key);
-
-				update.run(); // Real time update
-			} catch (IllegalArgumentException e) {
-				outputField.setText(e.getMessage());
-			}
-		};
 
 		keyField.getDocument().addDocumentListener(new DocumentListener() {
 
 			@Override
-			public void insertUpdate(DocumentEvent e) { updateKey.run(); }
+			public void insertUpdate(DocumentEvent e) { inputChange(); }
 
 			@Override
-			public void removeUpdate(DocumentEvent e) { updateKey.run(); }
+			public void removeUpdate(DocumentEvent e) { inputChange(); }
 
 			@Override
 			public void changedUpdate(DocumentEvent e) {}
+
+			public void inputChange() {
+				handler.setKey(keyField.getText());
+				update.run();
+			}
+
 		});
 
-		keyOption1.addActionListener(e -> { keyEncoding = 0; updateKey.run(); });
-		keyOption2.addActionListener(e -> { keyEncoding = 1; updateKey.run(); });
-		keyOption3.addActionListener(e -> { keyEncoding = 2; updateKey.run(); });
-		inputOption1.addActionListener(e -> { inputEncoding = 0; update.run(); });
-		inputOption2.addActionListener(e -> { inputEncoding = 1; update.run(); });
-		inputOption3.addActionListener(e -> { inputEncoding = 2; update.run(); });
-		outputOption1.addActionListener(e -> { outputEncoding = 0; update.run(); });
-		outputOption2.addActionListener(e -> { outputEncoding = 1; update.run(); });
+		keyOption1.addActionListener   (e -> { handler.setKeyEncoding(0);    update.run(); });
+		keyOption2.addActionListener   (e -> { handler.setKeyEncoding(1);    update.run(); });
+		keyOption3.addActionListener   (e -> { handler.setKeyEncoding(2);    update.run(); });
+		inputOption1.addActionListener (e -> { handler.setInputEncoding(0);  update.run(); });
+		inputOption2.addActionListener (e -> { handler.setInputEncoding(1);  update.run(); });
+		inputOption3.addActionListener (e -> { handler.setInputEncoding(2);  update.run(); });
+		outputOption1.addActionListener(e -> { handler.setOutputEncoding(0); update.run(); });
+		outputOption2.addActionListener(e -> { handler.setOutputEncoding(1); update.run(); });
 	}
 
 }
