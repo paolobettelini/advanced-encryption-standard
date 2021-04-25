@@ -1,4 +1,4 @@
-package ch.bettelini.aes.utils;
+package ch.bettelini.app.utils;
 
 import java.util.Base64;
 import java.util.Base64.Decoder;

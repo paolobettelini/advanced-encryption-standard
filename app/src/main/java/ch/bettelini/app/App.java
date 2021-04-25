@@ -1,7 +1,4 @@
-package ch.bettelini.aes.app;
-
-import ch.bettelini.aes.AES;
-import ch.bettelini.aes.utils.Converter;
+package ch.bettelini.app;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JFrame;
@@ -12,10 +9,17 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import ch.bettelini.aes.AES;
+import ch.bettelini.app.utils.Converter;
+
 import java.awt.Color;
 import java.awt.Font;
 
 public class App extends JFrame {
+
+	public static void main(String[] args) {
+		new App();
+	}
 
 	private AES cipher;
 
@@ -45,8 +49,8 @@ public class App extends JFrame {
 		keyOptionsLabel.setForeground(Color.WHITE);
 
 		JRadioButton keyOption1 = new JRadioButton("Plain Text", true);
-        JRadioButton keyOption2 = new JRadioButton("Base64");
-        JRadioButton keyOption3 = new JRadioButton("Hex");
+		JRadioButton keyOption2 = new JRadioButton("Base64");
+		JRadioButton keyOption3 = new JRadioButton("Hex");
 		
 		keyOption1.setBounds(15, 110, 100, 30);
 		keyOption2.setBounds(15, 140, 100, 30);
@@ -61,9 +65,9 @@ public class App extends JFrame {
 		keyOption3.setForeground(Color.WHITE);
 
 		ButtonGroup keyGroup = new ButtonGroup();
-        keyGroup.add(keyOption1);
-        keyGroup.add(keyOption2);
-        keyGroup.add(keyOption3);
+		keyGroup.add(keyOption1);
+		keyGroup.add(keyOption2);
+		keyGroup.add(keyOption3);
 
 		JLabel inputLabel = new JLabel("Input");
 		inputLabel.setBounds(270, 5, 100, 30);
@@ -83,8 +87,8 @@ public class App extends JFrame {
 		inputOptionsLabel.setForeground(Color.WHITE);
 
 		JRadioButton inputOption1 = new JRadioButton("Plain Text", true);
-        JRadioButton inputOption2 = new JRadioButton("Base64");
-        JRadioButton inputOption3 = new JRadioButton("Hex");
+		JRadioButton inputOption2 = new JRadioButton("Base64");
+		JRadioButton inputOption3 = new JRadioButton("Hex");
 		
 		inputOption1.setBounds(215, 110, 100, 30);
 		inputOption2.setBounds(215, 140, 100, 30);
@@ -99,9 +103,9 @@ public class App extends JFrame {
 		inputOption3.setForeground(Color.WHITE);
 
 		ButtonGroup inputGroup = new ButtonGroup();
-        inputGroup.add(inputOption1);
-        inputGroup.add(inputOption2);
-        inputGroup.add(inputOption3);
+		inputGroup.add(inputOption1);
+		inputGroup.add(inputOption2);
+		inputGroup.add(inputOption3);
 
 		JLabel outputLabel = new JLabel("Output");
 		outputLabel.setBounds(470, 5, 100, 30);
@@ -109,7 +113,7 @@ public class App extends JFrame {
 		outputLabel.setForeground(Color.WHITE);
 
 		JTextArea outputField = new JTextArea();
-		outputField.setBounds(415, 35, 150, 40);
+		outputField.setBounds(415, 35, 300, 40);
 		outputField.setFont(calibri);
 		outputField.setBackground(Color.GRAY);
 		outputField.setForeground(Color.WHITE);
@@ -121,8 +125,8 @@ public class App extends JFrame {
 		outputOptionsLabel.setFont(calibri);
 		outputOptionsLabel.setForeground(Color.WHITE);
 
-        JRadioButton outputOption1 = new JRadioButton("Base64", true);
-        JRadioButton outputOption2 = new JRadioButton("Hex");
+		JRadioButton outputOption1 = new JRadioButton("Base64", true);
+		JRadioButton outputOption2 = new JRadioButton("Hex");
 		
 		outputOption1.setBounds(415, 110, 100, 30);
 		outputOption2.setBounds(415, 140, 100, 30);
@@ -134,8 +138,8 @@ public class App extends JFrame {
 		outputOption2.setForeground(Color.WHITE);
 
 		ButtonGroup outputGroup = new ButtonGroup();
-        outputGroup.add(outputOption1);
-        outputGroup.add(outputOption2);
+		outputGroup.add(outputOption1);
+		outputGroup.add(outputOption2);
 
 		add(keyLabel);
 		add(keyField);
@@ -157,8 +161,8 @@ public class App extends JFrame {
 		add(outputOption1);
 		add(outputOption2);
 
-        getContentPane().setBackground(Color.DARK_GRAY);
-		setSize(600, 425);
+		getContentPane().setBackground(Color.DARK_GRAY);
+		setSize(/*600*/1000, 425);
 		setResizable(false);
 		setLayout(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
