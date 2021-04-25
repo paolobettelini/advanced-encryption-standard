@@ -7,7 +7,7 @@
 atlassian-ide-plugin.xml
 
 ### vscode ###
-.vscode
+.vscode/
 
 ### Eclipse ###
 .metadata
@@ -62,7 +62,6 @@ nbbuild/
 dist/
 nbdist/
 .nb-gradle/
-
 
 ### Maven ###
 target/
