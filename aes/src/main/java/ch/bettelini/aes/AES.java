@@ -62,7 +62,12 @@ public class AES {
 		0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb
 	};
 
+	/**
+	 * The number of 32-bit words comprising the Cipher Key.
+	 * The number or columns when we represent the key as a matrix.
+	 */
 	private int keySize;
+	
 	private int rounds;
 
 	public byte[][] subkeys;
@@ -79,14 +84,36 @@ public class AES {
 			throw new IllegalArgumentException("key size must be 128, 192 or 256 bits");
 		}
 
-		this.keySize = key.length << 3; // bytes to bits conversion
-		this.rounds = (key.length >> 2) + 6;
+		this.keySize = key.length >> 2;
+		this.rounds = keySize + 6;
 
 		subkeys = generateSubkeys(key);
 	}
 
-	public byte[] decrypt(byte[] data) {
-		return null;
+	public byte[] decrypt(byte[] data)
+			throws IllegalArgumentException {
+		if (data.length == 0 || data.length % 16 != 0) {
+			throw new IllegalArgumentException("Invalid data size");
+		}
+
+		int blocks = data.length >> 4;
+		byte[] result = new byte[data.length];
+
+		for (int i = 0; i < blocks; i++) {
+			byte[] block = new byte[16];
+
+			for (int j = 0; j < block.length; j++) {
+				block[j] = data[(i << 4) + j];
+			}
+
+			byte[] decrypted = decryptBlock(block);
+
+			for (int j = 0; j < decrypted.length; j++) {
+				result[(i << 4) + j] = decrypted[j];
+			}
+		}
+
+		return result;
 	}
 
 	public byte[] encrypt(byte[] data) {
@@ -117,6 +144,10 @@ public class AES {
 		return result;
 	}
 
+	private byte[] decryptBlock(byte[] block) {
+		return null;
+	}
+
 	private byte[] encryptBlock(byte[] block) {
 		// Create state matrix
 		byte[][] state = generateState(block);
@@ -132,7 +163,7 @@ public class AES {
 			shiftRows(state);
 			
 			// Except for the last round
-			if (i != 10) {
+			if (i != rounds) {
 				// Apply mixColumns operation
 				mixColumns(state);
 			}
@@ -154,40 +185,32 @@ public class AES {
 	}
 
 	private byte[][] generateSubkeys(byte[] key) {
-		if (keySize == 192) {
-			return null;
-		}
+		int totalWords = (rounds + 1) << 2;
+		byte[][] result = new byte[totalWords][4];
 
-		if (keySize == 256) {
-			return null;
-		}
-
-		byte[][] result = new byte[(10 + 1) << 2][4];
-
-		// Create key matrix
-		for (int i = 0; i < 4; i++) {
+		for (int i = 0; i < keySize; i++) {
 			for (int j = 0; j < 4; j++) {
-				result[i][j] = key[i * 4 + j];
+				result[i][j] = key[(i << 2) + j];
 			}
 		}
 
-		for (int i = 4; i < 44; i++) {
+		for (int i = keySize; i < totalWords; i++) {
 			byte[] tempWord = new byte[4];
 
 			for(int j = 0; j < 4; j++) {
 				tempWord[j] = result[i - 1][j];
 			}
 
-			if (i % 4 == 0) {
+			if (i % keySize == 0) {
 				rotateWord(tempWord);
 				subBytes(tempWord);
 
-				tempWord[0] = (byte) (tempWord[0] ^ (rcon[i / 4] & 0xFF));
-			} /*else if (Nk > 6 && i % Nk == 4) {
-				temp = SubWord(temp);
-			}*/
+				tempWord[0] = (byte) (tempWord[0] ^ (rcon[i / keySize] & 0xFF));
+			} else if (keySize > 6 && i % keySize == 4) {
+				subBytes(tempWord);
+			}
 
-			result[i] = xor(result[i - 4], tempWord);
+			result[i] = xor(result[i - keySize], tempWord);
 		}
 
 		return result;
