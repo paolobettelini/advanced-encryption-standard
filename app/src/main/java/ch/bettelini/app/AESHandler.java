@@ -9,10 +9,13 @@ public class AESHandler {
 	
 	private String key, in, out;
 
+	private boolean encryption = true;
+
 	private AES cipher;
 
 	public AESHandler() {
-		this.keyEncoding = this.inputEncoding = this.outputEncoding = 0;
+		this.keyEncoding = this.inputEncoding = 0;
+		this.outputEncoding = 1;
 		this.cipher = new AES(new byte[16]);
 	}
 
@@ -28,7 +31,7 @@ public class AESHandler {
 					break;
 				case 1: // Base64
 					try {
-						bytes = Converter.frombase64(key);
+						bytes = Converter.fromBase64(key);
 					} catch (IllegalArgumentException e) {
 						out = "Invalid Base64 Key";
 						return;
@@ -79,7 +82,24 @@ public class AESHandler {
 		update();
 	}
 
+	public void setEncryption() {
+		encryption = true;
+
+		update();
+	}
+
+	public void setDecryption() {
+		encryption = false;
+
+		update();
+	}
+
 	private void update() {
+		if (in == null || in.isEmpty()) {
+			out = "Invalid input";
+			return;
+		}
+
 		byte[] bytes = null;
 
 		switch (inputEncoding) {
@@ -89,7 +109,7 @@ public class AESHandler {
 				break;
 			case 1: // Base64
 				try {
-					bytes = Converter.frombase64(in);
+					bytes = Converter.fromBase64(in);
 				} catch (IllegalArgumentException e) {
 					out = "Invalid Base64 Input";
 					return;
@@ -107,16 +127,30 @@ public class AESHandler {
 				break;
 		}
 
-		byte[] result = cipher.encrypt(bytes);
+		byte[] result = null;
+
+		if (encryption) {
+			result = cipher.encrypt(bytes);
+		} else {
+			try {
+				result = cipher.decrypt(bytes);
+			} catch (IllegalArgumentException e) {
+				out = e.getMessage();
+				return;
+			}
+		}
 
 		switch (outputEncoding) {
-			case 0: // Base 64
-				out = Converter.toBase64(result);
+			case 0: // Plain Text
+				out = new String(result);
 
-				break;
-			case 1: // Hex
+			break;
+			case 1: // Base 64
+				out = Converter.toBase64(result);
+			
+			break;
+			case 2: // Hex		
 				out = Converter.toHex(result);
-				
 				break;
 		}
 	}

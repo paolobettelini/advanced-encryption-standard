@@ -95,7 +95,7 @@ public class Converter {
 	 * @throws IllegalArgumentException if the data is not a valid representation
 	 * @see {@link #toBase64(byte[])} the inverse function
 	 */
-	public static byte[] frombase64(String data)
+	public static byte[] fromBase64(String data)
 			throws IllegalArgumentException {
 		return decoder.decode(data);
 	}
