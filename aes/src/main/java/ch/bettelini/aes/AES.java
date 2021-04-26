@@ -1,8 +1,5 @@
 package ch.bettelini.aes;
 
-/**
- * https://www.brainkart.com/article/AES-Key-Expansion_8410/
- */
 public class AES {
 	
 	private static final int[] sbox = {
@@ -24,7 +21,7 @@ public class AES {
 		0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
 	};
 
-	/*private static int[] sbox_inv = {
+	private static int[] sbox_inv = {
 		0x52, 0x09, 0x6A, 0xD5, 0x30, 0x36, 0xA5, 0x38, 0xBF, 0x40, 0xA3, 0x9E, 0x81, 0xF3, 0xD7, 0xFB,
 		0x7C, 0xE3, 0x39, 0x82, 0x9B, 0x2F, 0xFF, 0x87, 0x34, 0x8E, 0x43, 0x44, 0xC4, 0xDE, 0xE9, 0xCB,
 		0x54, 0x7B, 0x94, 0x32, 0xA6, 0xC2, 0x23, 0x3D, 0xEE, 0x4C, 0x95, 0x0B, 0x42, 0xFA, 0xC3, 0x4E,
@@ -41,7 +38,7 @@ public class AES {
 		0x60, 0x51, 0x7F, 0xA9, 0x19, 0xB5, 0x4A, 0x0D, 0x2D, 0xE5, 0x7A, 0x9F, 0x93, 0xC9, 0x9C, 0xEF,
 		0xA0, 0xE0, 0x3B, 0x4D, 0xAE, 0x2A, 0xF5, 0xB0, 0xC8, 0xEB, 0xBB, 0x3C, 0x83, 0x53, 0x99, 0x61,
 		0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D
-	};*/
+	};
 
 	private static int rcon[] = {
 		0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 
@@ -113,7 +110,7 @@ public class AES {
 			}
 		}
 
-		return result;
+		return removePadding(result);
 	}
 
 	public byte[] encrypt(byte[] data) {
@@ -145,7 +142,28 @@ public class AES {
 	}
 
 	private byte[] decryptBlock(byte[] block) {
-		return null;
+		byte[][] state = generateState(block);
+
+		for (int i = rounds; i > 0; i--) {
+			// Apply (inverse) addRoundKey
+			addRoundKey(state, subkeys, i);
+			
+			// Except for the first round
+			if (i != rounds) {
+				// Apply inverse mixColumns operation
+				invMixColumns(state);
+			}
+
+			// Apply inverse shiftRows operation
+			invShiftRows(state);
+		
+			// Apply inverse subBytes operation
+			invSubBytes(state);
+		}
+
+		addRoundKey(state, subkeys, 0);
+
+		return unfoldState(state);
 	}
 
 	private byte[] encryptBlock(byte[] block) {
@@ -172,7 +190,10 @@ public class AES {
 			addRoundKey(state, subkeys, i);
 		}
 
-		// Unfold matrix
+		return unfoldState(state);
+	}
+
+	private byte[] unfoldState(byte[][] state) {
 		byte[] result = new byte[16];
 
 		for (int i = 0; i < 4; i++) {
@@ -244,17 +265,32 @@ public class AES {
 		return state;
 	}
 
+	private void invMixColumns(byte[][] state) {
+		int[] sp = new int[4];
+		byte b02 = (byte)0x0e, b03 = (byte)0x0b, b04 = (byte)0x0d, b05 = (byte)0x09;
+		for (int i = 0; i < 4; i++) {
+			sp[0] = FFMul(b02, state[0][i]) ^ FFMul(b03, state[1][i]) ^ FFMul(b04, state[2][i])  ^ FFMul(b05, state[3][i]);
+			sp[1] = FFMul(b05, state[0][i]) ^ FFMul(b02, state[1][i]) ^ FFMul(b03, state[2][i])  ^ FFMul(b04, state[3][i]);
+			sp[2] = FFMul(b04, state[0][i]) ^ FFMul(b05, state[1][i]) ^ FFMul(b02, state[2][i])  ^ FFMul(b03, state[3][i]);
+			sp[3] = FFMul(b03, state[0][i]) ^ FFMul(b04, state[1][i]) ^ FFMul(b05, state[2][i])  ^ FFMul(b02, state[3][i]);
+
+			for (int j = 0; j < 4; j++) {
+				state[j][i] = (byte)(sp[j]);
+			}
+		}
+	}
+
 	private void mixColumns(byte[][] state) {
 		int[] sp = new int[4];
 		byte b02 = (byte)0x02, b03 = (byte)0x03;
-		for (int c = 0; c < 4; c++) {
-			sp[0] = FFMul(b02, state[0][c]) ^ FFMul(b03, state[1][c]) ^ state[2][c] ^ state[3][c];
-			sp[1] = state[0][c] ^ FFMul(b02, state[1][c]) ^ FFMul(b03, state[2][c]) ^ state[3][c];
-			sp[2] = state[0][c] ^ state[1][c] ^ FFMul(b02, state[2][c]) ^ FFMul(b03, state[3][c]);
-			sp[3] = FFMul(b03, state[0][c]) ^ state[1][c]  ^ state[2][c] ^ FFMul(b02, state[3][c]);
+		for (int i = 0; i < 4; i++) {
+			sp[0] = FFMul(b02, state[0][i]) ^ FFMul(b03, state[1][i]) ^ state[2][i] ^ state[3][i];
+			sp[1] = state[0][i] ^ FFMul(b02, state[1][i]) ^ FFMul(b03, state[2][i]) ^ state[3][i];
+			sp[2] = state[0][i] ^ state[1][i] ^ FFMul(b02, state[2][i]) ^ FFMul(b03, state[3][i]);
+			sp[3] = FFMul(b03, state[0][i]) ^ state[1][i] ^ state[2][i] ^ FFMul(b02, state[3][i]);
 			
-			for (int i = 0; i < 4; i++) {
-				state[i][c] = (byte) (sp[i]);
+			for (int j = 0; j < 4; j++) {
+				state[j][i] = (byte) (sp[j]);
 			}
 		}
 	}
@@ -269,7 +305,7 @@ public class AES {
 
 			t = (byte) (bb & 0x80);
 			bb = (byte) (bb << 1);
-			
+
 			if (t != 0) {
 				bb = (byte) (bb ^ 0x1B);
 			}
@@ -288,13 +324,13 @@ public class AES {
 		}
 	}
 
-	/*private void invSubBytes(byte[][] state) {
+	private void invSubBytes(byte[][] state) {
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < 4; j++) {
 				state[i][j] = (byte) (sbox_inv[state[i][j] & 0xFF] & 0xFF);
 			}
 		}
-	}*/
+	}
 
 	private void subBytes(byte[] word) {
 		for (int i = 0; i < 4; i++) {
@@ -304,15 +340,33 @@ public class AES {
 
 	private void shiftRows(byte[][] state) {
 		for (int i = 1; i < 4; i++) { // i == 0 doesn't affect the matrix
-			state[i] = shiftRow(state[i], i);
+			state[i] = shiftRowLeft(state[i], i);
 		}
 	}
 
-	private byte[] shiftRow(byte[] row, int times) {
+	private void invShiftRows(byte[][] state) {
+		for (int i = 1; i < 4; i++) { // i == 0 doesn't affect the matrix
+			state[i] = shiftRowRight(state[i], i);
+		}
+	}
+
+	private byte[] shiftRowRight(byte[] row, int times) {
+		byte[] result = new byte[row.length];
+		
+		times %= result.length;
+
+		for (int i = 0; i < result.length; i++) {
+			result[i] = row[(i - times + 4) % result.length];
+		}
+
+		return result;
+	}
+
+	private byte[] shiftRowLeft(byte[] row, int times) {
 		byte[] result = new byte[row.length];
 
 		for (int i = 0; i < result.length; i++) {
-			result[i] = row[(i + times) % 4];
+			result[i] = row[(i + times) % result.length];
 		}
 
 		return result;
@@ -336,7 +390,7 @@ public class AES {
 		for (int i = 0; i < block.length; i++) {
 			result[i] = block[i];
 		}
-		
+
 		// add padding
 		result[block.length] = (byte) 0x80;
 		for (int i = block.length + 1; i < result.length; i++) {
@@ -348,10 +402,10 @@ public class AES {
 
 	public static byte[] removePadding(byte[] block) {
 		int length = block.length;
-		
+
 		for (int i = length - 1; i >= 0; i--) {
 			length--;
-			
+
 			if (block[i] == (byte)0x80) { // start of padding
 				break;
 			}
