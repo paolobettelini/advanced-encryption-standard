@@ -1,7 +1,17 @@
 package ch.bettelini.aes;
 
+/**
+ * AES
+ * This object represents a AES 128/192/256-bit key ECB with PKCS#7 encoder.
+ * 
+ * @version 26.04.2021
+ * @author Paolo Bettelini
+ */
 public class AES {
 	
+	/**
+	 * The Substitution-Box.
+	 */
 	private static final int[] sbox = {
 		0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
 		0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0,
@@ -21,6 +31,9 @@ public class AES {
 		0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
 	};
 
+	/**
+	 * The inverse Substitution-Box.
+	 */
 	private static int[] sbox_inv = {
 		0x52, 0x09, 0x6A, 0xD5, 0x30, 0x36, 0xA5, 0x38, 0xBF, 0x40, 0xA3, 0x9E, 0x81, 0xF3, 0xD7, 0xFB,
 		0x7C, 0xE3, 0x39, 0x82, 0x9B, 0x2F, 0xFF, 0x87, 0x34, 0x8E, 0x43, 0x44, 0xC4, 0xDE, 0xE9, 0xCB,
@@ -40,6 +53,10 @@ public class AES {
 		0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D
 	};
 
+	/**
+	 * Precalculated rcon table.
+	 * Used by the Rijndael key schedule.
+	 */
 	private static int rcon[] = {
 		0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 
 		0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 
@@ -65,15 +82,33 @@ public class AES {
 	 */
 	private int keySize;
 	
+	/**
+	 * The number of rounds to perform.
+	 */
 	private int rounds;
 
+	/**
+	 * The keys for each round, generazed by the key schedule.
+	 */
 	public byte[][] subkeys;
 
+	/**
+	 * Default constructor override. 
+	 * 
+	 * @param key the main key
+	 * @throws IllegalArgumentException if the key length isn't 128/192/256 bit
+	 */
 	public AES(byte[] key)
 			throws IllegalArgumentException {
 		setKey(key);
 	}
 
+	/**
+	 * Changed the key of the instance.
+	 * 
+	 * @param key the main key
+	 * @throws IllegalArgumentException if the key length isn't 128/192/256 bit
+	 */
 	public void setKey(byte[] key) 
 			throws IllegalArgumentException {
 				
@@ -87,32 +122,12 @@ public class AES {
 		subkeys = generateSubkeys(key);
 	}
 
-	public byte[] decrypt(byte[] data)
-			throws IllegalArgumentException {
-		if (data.length == 0 || data.length % 16 != 0) {
-			throw new IllegalArgumentException("Invalid data size");
-		}
-
-		int blocks = data.length >> 4;
-		byte[] result = new byte[data.length];
-
-		for (int i = 0; i < blocks; i++) {
-			byte[] block = new byte[16];
-
-			for (int j = 0; j < block.length; j++) {
-				block[j] = data[(i << 4) + j];
-			}
-
-			byte[] decrypted = decryptBlock(block);
-
-			for (int j = 0; j < decrypted.length; j++) {
-				result[(i << 4) + j] = decrypted[j];
-			}
-		}
-
-		return removePadding(result);
-	}
-
+	/**
+	 * Encryption algorithm.
+	 * 
+	 * @param data the data to encrypt
+	 * @return the encrypted data
+	 */
 	public byte[] encrypt(byte[] data) {
 		// Size of the encrypted byte stream with padding
 		int size = (data.length + 15) >> 4 << 4;
@@ -141,11 +156,52 @@ public class AES {
 		return result;
 	}
 
+	/**
+	 * Decryption algorithm.
+	 * 
+	 * @param data the data to decrypt
+	 * @return the result
+	 * @throws IllegalArgumentException if the data length isn't a multiple of 16
+	 * 	or it contains invalid padding.
+	 */
+	public byte[] decrypt(byte[] data)
+			throws IllegalArgumentException {
+		if (data.length == 0 || data.length % 16 != 0) {
+			throw new IllegalArgumentException("Invalid data size");
+		}
+
+		int blocks = data.length >> 4;
+		byte[] result = new byte[data.length];
+
+		for (int i = 0; i < blocks; i++) {
+			byte[] block = new byte[16];
+
+			for (int j = 0; j < block.length; j++) {
+				block[j] = data[(i << 4) + j];
+			}
+
+			byte[] decrypted = decryptBlock(block);
+
+			for (int j = 0; j < decrypted.length; j++) {
+				result[(i << 4) + j] = decrypted[j];
+			}
+		}
+
+		return removePadding(result);
+	}
+
+	/**
+	 * Decrypts a single 128-bit block.
+	 * 
+	 * @param block the block to decrypt
+	 * @return the decrypted block
+	 */
 	private byte[] decryptBlock(byte[] block) {
 		byte[][] state = generateState(block);
 
 		for (int i = rounds; i > 0; i--) {
 			// Apply (inverse) addRoundKey
+			// XOR operator is its own inverse function
 			addRoundKey(state, subkeys, i);
 			
 			// Except for the first round
@@ -161,11 +217,18 @@ public class AES {
 			invSubBytes(state);
 		}
 
+		// Apply (inverse) addRoundKey
 		addRoundKey(state, subkeys, 0);
 
 		return unfoldState(state);
 	}
 
+	/**
+	 * Encrypts a single 128-bit block.
+	 * 
+	 * @param block the block to encrypt
+	 * @return the encrypted block
+	 */
 	private byte[] encryptBlock(byte[] block) {
 		// Create state matrix
 		byte[][] state = generateState(block);
@@ -193,7 +256,13 @@ public class AES {
 		return unfoldState(state);
 	}
 
-	private byte[] unfoldState(byte[][] state) {
+	/**
+	 * Converts a state matrix to a byte stream.
+	 * 
+	 * @param state the state to unfold
+	 * @return the result
+	 */
+	private static byte[] unfoldState(byte[][] state) {
 		byte[] result = new byte[16];
 
 		for (int i = 0; i < 4; i++) {
@@ -205,6 +274,12 @@ public class AES {
 		return result;
 	}
 
+	/**
+	 * Generates the sub-keys for each round.
+	 * 
+	 * @param key the main key
+	 * @return the sub-keys
+	 */
 	private byte[][] generateSubkeys(byte[] key) {
 		int totalWords = (rounds + 1) << 2;
 		byte[][] result = new byte[totalWords][4];
@@ -237,6 +312,13 @@ public class AES {
 		return result;
 	}
 
+	/**
+	 * Applies an XOR operator to all corresponding bits between two single bytes.
+	 * 
+	 * @param a the first byte
+	 * @param b the second byte
+	 * @return the result
+	 */
 	private static byte[] xor(byte[] a, byte[] b) {
 		byte[] result = new byte[a.length];
 
@@ -247,7 +329,14 @@ public class AES {
 		return result;
 	}
 
-	private void addRoundKey(byte[][] state, byte[][] subkeys, int round) {
+	/**
+	 * Applies an XOR operator to all corresponding bits between a state and a sub-key. 
+	 * 
+	 * @param state the state
+	 * @param subkeys the sub-keys
+	 * @param round the current round
+	 */
+	private static void addRoundKey(byte[][] state, byte[][] subkeys, int round) {
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < 4; j++) {
 				state[i][j] = (byte) (state[i][j] ^ subkeys[round * 4 + j][i]);
@@ -255,7 +344,13 @@ public class AES {
 		}
 	}
 
-	private byte[][] generateState(byte[] block) {
+	/**
+	 * Converts a 16-byte block to a 4x4 byte matrix.
+	 * 
+	 * @param block the byte stream
+	 * @return the resulting matrix
+	 */
+	private static byte[][] generateState(byte[] block) {
 		byte[][] state = new byte[4][4];
 		
 		for (int i = 0; i < block.length; i++) {
@@ -265,7 +360,13 @@ public class AES {
 		return state;
 	}
 
-	private void invMixColumns(byte[][] state) {
+	/**
+	 * Inverse mix columns operator.
+	 * 
+	 * @param state the state to operate on
+	 * @see {@code #mixColumns(byte[][])} the inverse function
+	 */
+	private static void invMixColumns(byte[][] state) {
 		int[] sp = new int[4];
 		byte b02 = (byte)0x0e, b03 = (byte)0x0b, b04 = (byte)0x0d, b05 = (byte)0x09;
 		for (int i = 0; i < 4; i++) {
@@ -280,7 +381,13 @@ public class AES {
 		}
 	}
 
-	private void mixColumns(byte[][] state) {
+	/**
+	 * Mix columns operator.
+	 * 
+	 * @param state the state to operate on
+	 * @see {@code #invMixColumns(byte[][])} the inverse function
+	 */
+	private static void mixColumns(byte[][] state) {
 		int[] sp = new int[4];
 		byte b02 = (byte)0x02, b03 = (byte)0x03;
 		for (int i = 0; i < 4; i++) {
@@ -295,6 +402,12 @@ public class AES {
 		}
 	}
 
+	/**
+	 * 
+	 * @param a
+	 * @param b
+	 * @return
+	 */
 	private static byte FFMul(byte a, byte b) {
 		byte aa = a, bb = b, r = 0, t;
 		
@@ -316,7 +429,14 @@ public class AES {
 		return r;
 	}
 
-	private void subBytes(byte[][] state) {
+	/**
+	 * Substitutes each byte of the state to its corresponding byte on the s-box.
+	 * 
+	 * @param state the state to operate on
+	 * @see {@code #sbox}
+	 * @see {@code #invSubBytes(byte[][])} the inverse function
+	 */
+	private static void subBytes(byte[][] state) {
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < 4; j++) {
 				state[i][j] = (byte) (sbox[state[i][j] & 0xFF] & 0xFF);
@@ -324,7 +444,14 @@ public class AES {
 		}
 	}
 
-	private void invSubBytes(byte[][] state) {
+	/**
+	 * Substitutes each byte of the state to its corresponding byte on the inverse s-box.
+	 * 
+	 * @param state the state to operate on
+	 * @see {@code #sbox_inv}
+	 * @see {@code #subBytes(byte[][])} the inverse function
+	 */
+	private static void invSubBytes(byte[][] state) {
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < 4; j++) {
 				state[i][j] = (byte) (sbox_inv[state[i][j] & 0xFF] & 0xFF);
@@ -332,25 +459,31 @@ public class AES {
 		}
 	}
 
-	private void subBytes(byte[] word) {
+	/**
+	 * Substitutes each byte of the word to its corresponding byte on the s-box.
+	 * 
+	 * @param word the 4-byte word to operate on
+	 * @see {@code #sbox}
+	 */
+	private static void subBytes(byte[] word) {
 		for (int i = 0; i < 4; i++) {
 			word[i] = (byte) (sbox[word[i] & 0xFF] & 0xFF);
 		}
 	}
 
-	private void shiftRows(byte[][] state) {
+	private static void shiftRows(byte[][] state) {
 		for (int i = 1; i < 4; i++) { // i == 0 doesn't affect the matrix
 			state[i] = shiftRowLeft(state[i], i);
 		}
 	}
 
-	private void invShiftRows(byte[][] state) {
+	private static void invShiftRows(byte[][] state) {
 		for (int i = 1; i < 4; i++) { // i == 0 doesn't affect the matrix
 			state[i] = shiftRowRight(state[i], i);
 		}
 	}
 
-	private byte[] shiftRowRight(byte[] row, int times) {
+	private static byte[] shiftRowRight(byte[] row, int times) {
 		byte[] result = new byte[row.length];
 		
 		times %= result.length;
@@ -362,7 +495,7 @@ public class AES {
 		return result;
 	}
 
-	private byte[] shiftRowLeft(byte[] row, int times) {
+	private static byte[] shiftRowLeft(byte[] row, int times) {
 		byte[] result = new byte[row.length];
 
 		for (int i = 0; i < result.length; i++) {
@@ -381,6 +514,13 @@ public class AES {
 		word[3] = q;
 	}
 
+	/**
+	 * Add PKCS#7 padding to a byte stream.
+	 * 
+	 * @param block the block to pad
+	 * @param n the length multiple
+	 * @return the padded block
+	 */
 	public static byte[] addPadding(byte[] block, int n) {
 		int length = n - block.length % n; // padding length
 		
@@ -400,7 +540,15 @@ public class AES {
 		return result;
 	}
 
-	public static byte[] removePadding(byte[] block) {
+	/**
+	 * Removes PKCS#7 from a block.
+	 * 
+	 * @param block the block to un-pad
+	 * @return the un-padded block
+	 * @throws IllegalArgumentException if the block has invalid PKCS#7 padding
+	 */
+	public static byte[] removePadding(byte[] block)
+			throws IllegalArgumentException {
 		int length = block.length;
 
 		for (int i = length - 1; i >= 0; i--) {
