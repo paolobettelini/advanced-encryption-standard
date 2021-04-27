@@ -515,7 +515,7 @@ public class AES {
 	}
 
 	/**
-	 * Adds ISO/IEC 9797-1 padding to a byte stream.
+	 * Adds ISO/IEC 7816-4 padding to a byte stream.
 	 * 
 	 * @param block the block to pad
 	 * @param n the length multiple
@@ -541,7 +541,7 @@ public class AES {
 	}
 
 	/**
-	 * Removes ISO/IEC 9797-1 from a block.
+	 * Removes ISO/IEC 7816-4 from a block.
 	 * 
 	 * @param block the block to un-pad
 	 * @return the un-padded block
