@@ -1,3 +1,5 @@
+package ch.bettelini.aes;
+
 import java.util.Random;
 
 public enum Padding {

@@ -90,7 +90,18 @@ public class AES {
 	/**
 	 * The keys for each round, generazed by the key schedule.
 	 */
-	public byte[][] subkeys;
+	private byte[][] subkeys;
+
+	/**
+	 * The type of padding to use
+	 */
+	private Padding padding;
+
+	public AES(byte key[], Padding padding) {
+		this.padding = padding;
+		
+		setKey(key);
+	}
 
 	/**
 	 * Default constructor override. 
@@ -100,7 +111,16 @@ public class AES {
 	 */
 	public AES(byte[] key)
 			throws IllegalArgumentException {
-		setKey(key);
+		this(key, Padding.PKCS7);
+	}
+
+	/**
+	 * Changes the type of padding to use
+	 * 
+	 * @param padding the type of padding
+	 */
+	public void setPadding(Padding padding) {
+		this.padding = padding;
 	}
 
 	/**
@@ -139,7 +159,7 @@ public class AES {
 
 		byte[] result = new byte[size];
 
-		data = addPadding(data, size);
+		data = padding.addPadding(data, size);
 
 		for (int i = 0; i < size >> 4; i++) {
 			byte[] block = new byte[16];
@@ -187,7 +207,7 @@ public class AES {
 			}
 		}
 
-		return removePadding(result);
+		return padding.removePadding(result);
 	}
 
 	/**
@@ -512,64 +532,6 @@ public class AES {
 		word[1] = word[2];
 		word[2] = word[3];
 		word[3] = q;
-	}
-
-	/**
-	 * Adds ISO/IEC 7816-4 padding to a byte stream.
-	 * 
-	 * @param block the block to pad
-	 * @param n the length multiple
-	 * @return the padded block
-	 */
-	public static byte[] addPadding(byte[] block, int n) {
-		int length = n - block.length % n; // padding length
-		
-		byte[] result = new byte[block.length + length];
-
-		// clone block data
-		for (int i = 0; i < block.length; i++) {
-			result[i] = block[i];
-		}
-
-		// add padding
-		result[block.length] = (byte) 0x80;
-		for (int i = block.length + 1; i < result.length; i++) {
-			result[i] = 0;
-		}
-
-		return result;
-	}
-
-	/**
-	 * Removes ISO/IEC 7816-4 from a block.
-	 * 
-	 * @param block the block to un-pad
-	 * @return the un-padded block
-	 * @throws IllegalArgumentException if the block has invalid PKCS#7 padding
-	 */
-	public static byte[] removePadding(byte[] block)
-			throws IllegalArgumentException {
-		int length = block.length;
-
-		for (int i = length - 1; i >= 0; i--) {
-			length--;
-
-			if (block[i] == (byte)0x80) { // start of padding
-				break;
-			}
-
-			if (block[i] != 0) { // no valid padding
-				throw new IllegalArgumentException("Invalid padding");
-			}
-		}
-
-		byte[] result = new byte[length];
-
-		for (int i = 0; i < length; i++) {
-			result[i] = block[i];
-		}
-
-		return result;
 	}
 
 }
