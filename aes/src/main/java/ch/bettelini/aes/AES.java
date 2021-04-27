@@ -111,7 +111,7 @@ public class AES {
 	 */
 	public AES(byte[] key)
 			throws IllegalArgumentException {
-		this(key, Padding.PKCS7);
+		this(key, Padding.PKCS_7);
 	}
 
 	/**

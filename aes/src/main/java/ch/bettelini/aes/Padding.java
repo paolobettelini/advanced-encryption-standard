@@ -3,7 +3,7 @@ package ch.bettelini.aes;
 import java.util.Random;
 
 public enum Padding {
-    PKCS7 {
+    PKCS_7 {
         @Override
         byte[] addPadding(byte[] data, int n) {
             int length = n - data.length % n; // padding length	
@@ -25,7 +25,15 @@ public enum Padding {
 		
         @Override
         byte[] removePadding(byte[] data) throws IllegalArgumentException {
-    		int length = data[data.length - 1] & 0xFF;
+			if (data.length == 0) {
+				throw new IllegalArgumentException("Invalid data size");
+			}
+
+	    	int length = data[data.length - 1] & 0xFF;
+
+			if (data.length < length) {
+				throw new IllegalArgumentException("Invalid data size");
+			}
 
     		for (int i = data.length - 1; i > data.length - length - 1; i--) {
     			if ((data[i] & 0xFF) != length) {
@@ -42,12 +50,12 @@ public enum Padding {
 			return result;
         }
     },
-    ISOESI {
+    ISO_IEC_7816_4 {
         @Override
         byte[] addPadding(byte[] data, int n) {
-       		int length = n - data.length % n;
+       		int totalLength = n - data.length % n;
 			
-			byte[] result = new byte[data.length + length];
+			byte[] result = new byte[data.length + totalLength];
 
 			// clone data
 			for (int i = 0; i < data.length; i++) {
@@ -114,8 +122,15 @@ public enum Padding {
 	    
     	@Override
 	    byte[] removePadding(byte[] data) throws IllegalArgumentException {
+			if (data.length == 0) {
+				throw new IllegalArgumentException("Invalid data size");
+			}
+
 	    	int length = data[data.length - 1] & 0xFF;
-	    	// check lunghezza > 0 e >=length
+
+			if (data.length < length) {
+				throw new IllegalArgumentException("Invalid data size");
+			}
 
 	    	byte[] result = new byte[data.length - length];
 
@@ -127,7 +142,7 @@ public enum Padding {
 	    	return result;
 	    }
     },
-    ANSIX9_23 {
+    ANSI_X9_23 {
     	@Override
     	byte[] addPadding(byte[] data, int n) {
     		int length = n - data.length % n;
@@ -149,7 +164,15 @@ public enum Padding {
 	    
     	@Override
 	    byte[] removePadding(byte[] data) throws IllegalArgumentException {
+			if (data.length == 0) {
+				throw new IllegalArgumentException("Invalid data size");
+			}
+
 	    	int length = data[data.length - 1] & 0xFF;
+
+			if (data.length < length) {
+				throw new IllegalArgumentException("Invalid data size");
+			}
 
 	    	for (int i = data.length - 2; i > data.length - length - 1; i--) {
 	    		if (data[i] != 0) {
