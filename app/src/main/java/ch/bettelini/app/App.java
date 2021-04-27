@@ -20,7 +20,7 @@ public class App extends JFrame {
 	}
 
 	public App() {
-		super("AES 128/192/256-bits ECB PKCS#7 Encryption/Decryption");
+		super("AES 128/192/256-bits ECB ISO/IEC 9797-1 Encryption/Decryption");
 
 		Font calibri = new Font("Calibri", Font.PLAIN, 14);
 
