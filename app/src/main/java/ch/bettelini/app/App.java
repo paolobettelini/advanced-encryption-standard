@@ -1,12 +1,14 @@
 package ch.bettelini.app;
 
 import javax.swing.ButtonGroup;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+
 
 import java.awt.Color;
 import java.awt.Font;
@@ -140,10 +142,10 @@ public class App extends JFrame {
 		outputGroup.add(outputOption2);
 		outputGroup.add(outputOption3);
 
-		JLabel mode = new JLabel("Mode");
-		mode.setBounds(15, 225, 100, 30);
-		mode.setForeground(Color.WHITE);
-		mode.setFont(calibri);
+		JLabel action = new JLabel("Mode");
+		action.setBounds(15, 225, 100, 30);
+		action.setForeground(Color.WHITE);
+		action.setFont(calibri);
 
 		JRadioButton encryption = new JRadioButton("Encryption", true);
 		JRadioButton decryption = new JRadioButton("Decryption");
@@ -157,9 +159,24 @@ public class App extends JFrame {
 		encryption.setBounds(15, 250, 100, 30);
 		decryption.setBounds(15, 280, 100, 30);
 
-		ButtonGroup modeGroup = new ButtonGroup();
-		modeGroup.add(encryption);
-		modeGroup.add(decryption);
+		ButtonGroup actionGroup = new ButtonGroup();
+		actionGroup.add(encryption);
+		actionGroup.add(decryption);
+		
+		JLabel paddingLabel = new JLabel("Padding");
+		paddingLabel.setBounds(265, 225, 100, 30);
+		paddingLabel.setFont(calibri);
+		paddingLabel.setForeground(Color.WHITE);
+
+		JComboBox<String> paddingBox = new JComboBox<>(new String[]{
+			"PKCS#7",
+			"ANSI X9.23",
+			"ISO 10126",
+			"ISO/IEC 7816-4"
+		});
+		paddingBox.setBounds(265, 250, 100, 30);
+		paddingBox.setBackground(Color.GRAY);
+		paddingBox.setForeground(Color.WHITE);
 
 		add(keyLabel);
 		add(keyField);
@@ -182,9 +199,12 @@ public class App extends JFrame {
 		add(outputOption2);
 		add(outputOption3);
 
-		add(mode);
+		add(action);
 		add(encryption);
 		add(decryption);
+
+		add(paddingLabel);
+		add(paddingBox);
 
 		getContentPane().setBackground(Color.DARK_GRAY);
 		setSize(955, 375);
@@ -192,7 +212,7 @@ public class App extends JFrame {
 		setLayout(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		// AES Interaction
+		// GUI/AES Interaction
 
 		AESHandler handler = new AESHandler();
 
@@ -234,6 +254,12 @@ public class App extends JFrame {
 				update.run();
 			}
 
+		});
+
+		paddingBox.addActionListener(e -> {
+			handler.setPadding((String)((JComboBox<String>)e.getSource()).getSelectedItem());
+			
+			update.run();
 		});
 
 		keyOption1.addActionListener   (e -> { handler.setKeyEncoding(0);    update.run(); });

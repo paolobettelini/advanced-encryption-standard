@@ -1,22 +1,43 @@
 package ch.bettelini.app;
 
 import ch.bettelini.aes.AES;
+import ch.bettelini.aes.Padding;
 import ch.bettelini.app.utils.Converter;
 
 public class AESHandler {
+
+	private AES cipher;
 
 	private int keyEncoding, inputEncoding, outputEncoding;
 	
 	private String key, in, out;
 
-	private boolean encryption = true;
-
-	private AES cipher;
+	private boolean encryption;
 
 	public AESHandler() {
+		this.cipher = new AES(new byte[16]);
 		this.keyEncoding = this.inputEncoding = 0;
 		this.outputEncoding = 1;
-		this.cipher = new AES(new byte[16]);
+		this.encryption = true;
+	}
+
+	public void setPadding(String padding) {
+		switch (padding) {
+			case "PKCS#7":
+				cipher.setPadding(Padding.PKCS_7);
+				break;
+			case "ANSI X9.23":
+				cipher.setPadding(Padding.ANSI_X9_23);
+				break;
+			case "ISO 10126":
+				cipher.setPadding(Padding.ISO_10126);
+				break;
+			case "ISO/IEC 7816-4":
+				cipher.setPadding(Padding.ISO_IEC_7816_4);
+				break;
+		}
+
+		update();
 	}
 
 	public void setKey(String key) {
