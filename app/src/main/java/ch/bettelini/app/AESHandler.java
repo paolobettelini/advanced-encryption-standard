@@ -1,6 +1,7 @@
 package ch.bettelini.app;
 
 import ch.bettelini.aes.AES;
+import ch.bettelini.aes.CipherMode;
 import ch.bettelini.aes.Padding;
 import ch.bettelini.app.utils.Converter;
 
@@ -8,15 +9,15 @@ public class AESHandler {
 
 	private AES cipher;
 
-	private int keyEncoding, inputEncoding, outputEncoding;
+	private int keyEncoding, inputEncoding, outputEncoding, ivEncoding;
 	
-	private String key, in, out;
+	private String key, in, out, iv;
 
 	private boolean encryption;
 
 	public AESHandler() {
 		this.cipher = new AES(new byte[16]);
-		this.keyEncoding = this.inputEncoding = 0;
+		this.keyEncoding = this.inputEncoding = ivEncoding = 0;
 		this.outputEncoding = 1;
 		this.encryption = true;
 	}
@@ -40,34 +41,79 @@ public class AESHandler {
 		update();
 	}
 
+	public void setMove(String mode) {
+		switch (mode) {
+			case "ECB":
+				cipher.setMode(CipherMode.ECB);
+				break;
+			case "CBC":
+				cipher.setMode(CipherMode.CBC);
+				break;
+		}
+
+		update();
+	}
+
+	public void setIV(String iv) {
+		this.iv = iv;
+
+		byte[] bytes = null;
+		
+		switch (ivEncoding) {
+			case 0: // PlainText
+				bytes = key.getBytes();
+				break;
+			case 1: // Base64
+				try {
+					bytes = Converter.fromBase64(iv);
+				} catch (IllegalArgumentException e) {
+					out = "Invalid Base64 IV";
+					return;
+				}
+				break;
+			case 2: // Hex
+				try {
+					bytes = Converter.fromHex(iv);
+				} catch (IllegalArgumentException e) {
+					out = "Invalid Hex IV";
+					return;
+				}
+				break;
+		}
+
+		cipher.setIV(bytes);
+
+		update();
+	}
+
 	public void setKey(String key) {
 		this.key = key;
 
-		try {
-			byte[] bytes = null;
+		byte[] bytes = null;
 
-			switch (keyEncoding) {
-				case 0: // PlainText
-					bytes = key.getBytes();
-					break;
-				case 1: // Base64
-					try {
-						bytes = Converter.fromBase64(key);
-					} catch (IllegalArgumentException e) {
-						out = "Invalid Base64 Key";
-						return;
-					}
-					break;
-				case 2: // Hex
-					try {
-						bytes = Converter.fromHex(key);
-					} catch (IllegalArgumentException e) {
-						out = "Invalid Hex Key";
-						return;
-					}
-					break;
-			}
-			
+		switch (keyEncoding) {
+			case 0: // PlainText
+				bytes = key.getBytes();
+				break;
+			case 1: // Base64
+				try {
+					bytes = Converter.fromBase64(key);
+				} catch (IllegalArgumentException e) {
+					out = "Invalid Base64 Key";
+					return;
+				}
+				break;
+			case 2: // Hex
+				try {
+					bytes = Converter.fromHex(key);
+				} catch (IllegalArgumentException e) {
+					out = "Invalid Hex Key";
+					return;
+				}
+				break;
+		}
+
+		try {
 			cipher.setKey(bytes);
 			update();
 		} catch (IllegalArgumentException e) {
@@ -101,6 +147,12 @@ public class AESHandler {
 		this.outputEncoding = encoding;
 
 		update();
+	}
+
+	public void setIvEncoding(int encoding) {
+		this.ivEncoding = encoding;
+
+		setIV(iv);
 	}
 
 	public void setEncryption() {

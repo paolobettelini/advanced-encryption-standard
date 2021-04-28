@@ -143,7 +143,7 @@ public class App extends JFrame {
 		outputGroup.add(outputOption2);
 		outputGroup.add(outputOption3);
 
-		JLabel action = new JLabel("Mode");
+		JLabel action = new JLabel("Action");
 		action.setBounds(15, 225, 100, 30);
 		action.setForeground(Color.WHITE);
 		action.setFont(calibri);
@@ -169,7 +169,7 @@ public class App extends JFrame {
 		paddingLabel.setFont(calibri);
 		paddingLabel.setForeground(Color.WHITE);
 
-		JComboBox<String> paddingBox = new JComboBox<>(new String[]{
+		JComboBox<String> paddingBox = new JComboBox<>(new String[] {
 			"PKCS#7",
 			"ANSI X9.23",
 			"ISO 10126",
@@ -178,6 +178,31 @@ public class App extends JFrame {
 		paddingBox.setBounds(265, 250, 100, 30);
 		paddingBox.setBackground(Color.GRAY);
 		paddingBox.setForeground(Color.WHITE);
+
+		JLabel modeLabel = new JLabel("Mode");
+		modeLabel.setBounds(520, 225, 100, 30);
+		modeLabel.setFont(calibri);
+		modeLabel.setForeground(Color.WHITE);
+
+		JComboBox<String> modeBox = new JComboBox<>(new String[] {
+			"CBC",
+			"ECB"
+		});
+		modeBox.setBounds(520, 250, 75, 30);
+		modeBox.setBackground(Color.GRAY);
+		modeBox.setForeground(Color.WHITE);
+
+		JLabel ivLabel = new JLabel("Initialization Vector (IV)");
+		ivLabel.setBounds(650, 225, 200, 30);
+		ivLabel.setFont(calibri);
+		ivLabel.setForeground(Color.WHITE);
+
+		JTextField ivField = new JTextField();
+		ivField.setBounds(650, 250, 200, 40);
+		ivField.setFont(calibri);
+		ivField.setBackground(Color.GRAY);
+		ivField.setForeground(Color.WHITE);
+		ivField.setBorder(null);
 
 		add(keyLabel);
 		add(keyField);
@@ -207,13 +232,19 @@ public class App extends JFrame {
 		add(paddingLabel);
 		add(paddingBox);
 
+		//add(modeLabel);
+		//add(modeBox);
+
+		//add(ivLabel);
+		//add(ivField);
+
 		getContentPane().setBackground(Color.DARK_GRAY);
 		setSize(955, 375);
 		setResizable(false);
 		setLayout(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		// GUI/AES Interaction
+		// GUI/AESHandler Interaction
 
 		AESHandler handler = new AESHandler();
 
@@ -259,6 +290,12 @@ public class App extends JFrame {
 
 		paddingBox.addActionListener(e -> {
 			handler.setPadding((String)((JComboBox<String>)e.getSource()).getSelectedItem());
+			
+			update.run();
+		});
+
+		modeBox.addActionListener(e -> {
+			handler.setMove((String)((JComboBox<String>)e.getSource()).getSelectedItem());
 			
 			update.run();
 		});

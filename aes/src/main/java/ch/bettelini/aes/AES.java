@@ -2,7 +2,11 @@ package ch.bettelini.aes;
 
 /**
  * AES
- * This object represents a AES 128/192/256-bit key ECB with PKCS#7 encoder.
+ * This object represents an encoder/decoder.
+ * 
+ * Supported key sizes: 128, 192, 256 bit
+ * Supported block cipher modes: ECB, CBC
+ * Supported paddings: ANSI X9.23, ISO 10126, PKCS#7, ISO/IEC 7816-4
  * 
  * @version 26.04.2021
  * @author Paolo Bettelini
@@ -97,11 +101,15 @@ public class AES {
 	 */
 	private Padding padding;
 
-	public AES(byte key[], Padding padding) {
-		this.padding = padding;
-		
-		setKey(key);
-	}
+	/**
+	 * The block cipher mode.
+	 */
+	private CipherMode mode;
+
+	/**
+	 * The Initialization Vector (IV)
+	 */
+	private byte[] iv;
 
 	/**
 	 * Default constructor override. 
@@ -111,16 +119,40 @@ public class AES {
 	 */
 	public AES(byte[] key)
 			throws IllegalArgumentException {
-		this(key, Padding.PKCS_7);
+		setKey(key);
+
+		// Default configurations
+		
+		this.padding = Padding.PKCS_7;
+		this.mode = CipherMode.CBC;
+		this.iv = new byte[16];
 	}
 
 	/**
-	 * Changes the type of padding to use
+	 * Changes the type of padding to use.
 	 * 
 	 * @param padding the type of padding
 	 */
 	public void setPadding(Padding padding) {
 		this.padding = padding;
+	}
+
+	/**
+	 * Changes the type of cipher block mode.
+	 * 
+	 * @param mode the block cipher mode
+	 */
+	public void setMode(CipherMode mode) {
+		this.mode = mode;
+	}
+
+	public void setIV(byte[] iv) 
+			throws IllegalArgumentException {
+		if (iv.length != 16) {
+			throw new IllegalArgumentException("Invalid IV size");
+		}
+
+		this.iv = iv;
 	}
 
 	/**
@@ -161,13 +193,24 @@ public class AES {
 
 		data = padding.addPadding(data, size);
 
+		byte[] lastBlock = null;
+		if (mode == CipherMode.CBC) {
+			lastBlock = clone(iv);
+		}
+
 		for (int i = 0; i < size >> 4; i++) {
 			byte[] block = new byte[16];
 			for (int j = 0; j < block.length; j++) {
 				block[j] = data[(i << 4) + j];
 			}
 
+			if (mode == CipherMode.CBC) {
+				block = xor(block, lastBlock);
+				lastBlock = block;
+			}
+
 			byte[] encryptedBlock = encryptBlock(block);
+
 			for (int j = 0; j < 16; j++) {
 				result[(i << 4) + j] = encryptedBlock[j];
 			}
@@ -193,6 +236,11 @@ public class AES {
 		int blocks = data.length >> 4;
 		byte[] result = new byte[data.length];
 
+		byte[] lastBlock = null;
+		if (mode == CipherMode.CBC) {
+			lastBlock = clone(iv);
+		}
+
 		for (int i = 0; i < blocks; i++) {
 			byte[] block = new byte[16];
 
@@ -201,6 +249,12 @@ public class AES {
 			}
 
 			byte[] decrypted = decryptBlock(block);
+
+			if (mode == CipherMode.CBC) {
+				byte[] _lastBlock = clone(lastBlock);
+				lastBlock = clone(decrypted);
+				decrypted = xor(decrypted, _lastBlock);
+			}
 
 			for (int j = 0; j < decrypted.length; j++) {
 				result[(i << 4) + j] = decrypted[j];
@@ -532,6 +586,16 @@ public class AES {
 		word[1] = word[2];
 		word[2] = word[3];
 		word[3] = q;
+	}
+
+	private static byte[] clone(byte[] data) {
+		byte[] result = new byte[data.length];
+
+		for (int i = 0; i < result.length; i++) {
+			result[i] = data[i];
+		}
+
+		return result;
 	}
 
 }
