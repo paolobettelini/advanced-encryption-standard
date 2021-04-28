@@ -165,7 +165,7 @@ public class App extends JFrame {
 		actionGroup.add(decryption);
 		
 		JLabel paddingLabel = new JLabel("Padding");
-		paddingLabel.setBounds(265, 225, 100, 30);
+		paddingLabel.setBounds(265, 225, 125, 30);
 		paddingLabel.setFont(calibri);
 		paddingLabel.setForeground(Color.WHITE);
 
@@ -179,6 +179,7 @@ public class App extends JFrame {
 		paddingBox.setBackground(Color.GRAY);
 		paddingBox.setForeground(Color.WHITE);
 
+		/////////////////////////////////////////
 		JLabel modeLabel = new JLabel("Mode");
 		modeLabel.setBounds(520, 225, 100, 30);
 		modeLabel.setFont(calibri);
@@ -188,21 +189,23 @@ public class App extends JFrame {
 			"CBC",
 			"ECB"
 		});
-		modeBox.setBounds(520, 250, 75, 30);
+		modeBox.setBounds(520, 250, 125, 30);
 		modeBox.setBackground(Color.GRAY);
 		modeBox.setForeground(Color.WHITE);
 
-		JLabel ivLabel = new JLabel("Initialization Vector (IV)");
-		ivLabel.setBounds(650, 225, 200, 30);
+		JLabel ivLabel = new JLabel("Initialization Vector (Base64)");
+		ivLabel.setBounds(700, 225, 200, 30);
 		ivLabel.setFont(calibri);
 		ivLabel.setForeground(Color.WHITE);
 
 		JTextField ivField = new JTextField();
-		ivField.setBounds(650, 250, 200, 40);
+		ivField.setBounds(700, 250, 220, 40);
 		ivField.setFont(calibri);
 		ivField.setBackground(Color.GRAY);
 		ivField.setForeground(Color.WHITE);
 		ivField.setBorder(null);
+
+		//////////////////////////
 
 		add(keyLabel);
 		add(keyField);
@@ -232,11 +235,11 @@ public class App extends JFrame {
 		add(paddingLabel);
 		add(paddingBox);
 
-		//add(modeLabel);
-		//add(modeBox);
+		add(modeLabel);
+		add(modeBox);
 
-		//add(ivLabel);
-		//add(ivField);
+		add(ivLabel);
+		add(ivField);
 
 		getContentPane().setBackground(Color.DARK_GRAY);
 		setSize(955, 375);
@@ -287,6 +290,24 @@ public class App extends JFrame {
 			}
 
 		});
+	
+		ivField.getDocument().addDocumentListener(new DocumentListener() {
+
+			@Override
+			public void insertUpdate(DocumentEvent e) { ivChange(); }
+
+			@Override
+			public void removeUpdate(DocumentEvent e) { ivChange(); }
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {}
+		
+			public void ivChange() {
+				handler.setIV(ivField.getText());
+				update.run();
+			}
+
+		});
 
 		paddingBox.addActionListener(e -> {
 			handler.setPadding((String)((JComboBox<String>)e.getSource()).getSelectedItem());
@@ -295,8 +316,12 @@ public class App extends JFrame {
 		});
 
 		modeBox.addActionListener(e -> {
-			handler.setMove((String)((JComboBox<String>)e.getSource()).getSelectedItem());
+			String mode = (String)((JComboBox<String>)e.getSource()).getSelectedItem();
+
+			handler.setMode(mode);
 			
+			ivField.setEnabled(mode.equals("CBC"));
+
 			update.run();
 		});
 

@@ -41,7 +41,7 @@ public class AESHandler {
 		update();
 	}
 
-	public void setMove(String mode) {
+	public void setMode(String mode) {
 		switch (mode) {
 			case "ECB":
 				cipher.setMode(CipherMode.ECB);
@@ -55,13 +55,17 @@ public class AESHandler {
 	}
 
 	public void setIV(String iv) {
+		if (iv == null) {
+			return;
+		}
+
 		this.iv = iv;
 
 		byte[] bytes = null;
 		
 		switch (ivEncoding) {
 			case 0: // PlainText
-				bytes = key.getBytes();
+				bytes = iv.getBytes();
 				break;
 			case 1: // Base64
 				try {
@@ -81,12 +85,19 @@ public class AESHandler {
 				break;
 		}
 
-		cipher.setIV(bytes);
-
-		update();
+		try {
+			cipher.setIV(bytes);
+			update();
+		} catch (IllegalArgumentException e) {
+			out = e.getMessage();
+		}
 	}
 
 	public void setKey(String key) {
+		if (key == null) {
+			return;
+		}
+
 		this.key = key;
 
 		byte[] bytes = null;
