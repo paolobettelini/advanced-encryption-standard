@@ -17,8 +17,8 @@ public class AESHandler {
 
 	public AESHandler() {
 		this.cipher = new AES(new byte[16]);
-		this.keyEncoding = this.inputEncoding = ivEncoding = 0;
-		this.outputEncoding = 1;
+		this.keyEncoding = this.inputEncoding  = 0;
+		this.outputEncoding = ivEncoding = 1;
 		this.encryption = true;
 	}
 
@@ -227,12 +227,10 @@ public class AESHandler {
 		switch (outputEncoding) {
 			case 0: // Plain Text
 				out = new String(result);
-
-			break;
+				break;
 			case 1: // Base 64
 				out = Converter.toBase64(result);
-			
-			break;
+				break;
 			case 2: // Hex		
 				out = Converter.toHex(result);
 				break;
