@@ -206,10 +206,13 @@ public class AES {
 
 			if (mode == CipherMode.CBC) {
 				block = xor(block, lastBlock);
-				lastBlock = block;
 			}
 
 			byte[] encryptedBlock = encryptBlock(block);
+
+			if (mode == CipherMode.CBC) {
+				lastBlock = encryptedBlock;
+			}
 
 			for (int j = 0; j < 16; j++) {
 				result[(i << 4) + j] = encryptedBlock[j];
@@ -251,9 +254,8 @@ public class AES {
 			byte[] decrypted = decryptBlock(block);
 
 			if (mode == CipherMode.CBC) {
-				byte[] _lastBlock = clone(lastBlock);
-				lastBlock = clone(decrypted);
-				decrypted = xor(decrypted, _lastBlock);
+				decrypted = xor(decrypted, lastBlock);
+				lastBlock = block;
 			}
 
 			for (int j = 0; j < decrypted.length; j++) {
